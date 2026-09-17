@@ -38,4 +38,9 @@ Create a Google Sheet with these exact 4 tabs (reference `sheet-template.csv`):
 1. Fork or clone this repository.
 2. Open `index.html` and find the line:
    ```javascript
-   const API_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+   https://script.google.com/macros/s/AKfycbykncIISCsVcHP-pK_slM8dnVY8FUKi6sCuYJhFFHg/dev
+
+
+   ### Quick Sheet Setup
+Click here to automatically clone the Google Sheet template to your Drive:
+👉 [Copy Google Sheet Template](https://docs.google.com/spreadsheets/d/1a6a7KEvq7mpNeqGx_4-BL3o9JbVB03Shzf-FeLVJ2Vk/copy)
