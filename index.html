@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sri Lankan Bakery Management System | ශ්‍රී ලංකා බේකරි</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sinhala@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bakery: {
+          50: '#fdf8f0',
+          100: '#f9ecd8',
+          200: '#f2d5a8',
+          300: '#e9b76e',
+          400: '#e09a3e',
+          500: '#d4791c',
+          600: '#b85d14',
+          700: '#934414',
+          800: '#783718',
+          900: '#662f19',
+          950: '#3a160a',
+        },
+        saffron: {
+          500: '#f4a226',
+          600: '#e08b10',
+        },
+        curry: {
+          500: '#c2410c',
+          600: '#9a3412',
+        }
+      },
+      fontFamily: {
+        sinhala: ['"Noto Sans Sinhala"', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #fdf8f0 0%, #f9ecd8 50%, #fdf8f0 100%);
+    min-height: 100vh;
+  }
+  .sinhala { font-family: 'Noto Sans Sinhala', sans-serif; }
+  .glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  .gradient-header {
+    background: linear-gradient(135deg, #662f19 0%, #934414 50%, #b85d14 100%);
+  }
+  .stat-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px rgba(102, 47, 25, 0.25);
+  }
+  .pulse-dot {
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slide-up { animation: slideUp 0.5s ease-out forwards; }
+  .yield-ring {
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .loader {
+    border: 3px solid rgba(184, 93, 20, 0.2);
+    border-top: 3px solid #b85d14;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: #f9ecd8; border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #e09a3e; border-radius: 3px; }
+  input:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(184, 93, 20, 0.2); }
+  .btn-primary {
+    background: linear-gradient(135deg, #b85d14 0%, #d4791c 100%);
+    transition: all 0.3s ease;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #934414 0%, #b85d14 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px -8px rgba(184, 93, 20, 0.5);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .table-row:hover { background: rgba(249, 236, 216, 0.5); }
+  .shift-btn { transition: all 0.2s ease; }
+  .shift-btn.active {
+    background: linear-gradient(135deg, #b85d14, #d4791c);
+    color: white;
+    box-shadow: 0 4px 12px rgba(184, 93, 20, 0.3);
+  }
+  .product-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .product-card:hover {
+    border-color: #d4791c;
+    background: #fdf8f0;
+  }
+  .product-card.selected {
+    border-color: #b85d14;
+    background: linear-gradient(135deg, #fdf8f0, #f9ecd8);
+    box-shadow: 0 4px 12px rgba(184, 93, 20, 0.2);
+  }
+  .toast {
+    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateX(100%); }
+  }
+  .pattern-bg {
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(244, 162, 38, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(194, 65, 12, 0.05) 0%, transparent 50%);
+  }
+</style>
+</head>
+<body class="pattern-bg">
+
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+<!-- Header -->
+<header class="gradient-header shadow-2xl sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+          <span class="text-3xl">🍞</span>
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Sri Lankan Bakery</h1>
+          <p class="text-bakery-200 sinhala text-sm sm:text-base">ශ්‍රී ලංකා බේකරි • Production & Inventory Control</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-right hidden sm:block">
+          <div id="liveClock" class="text-2xl font-mono font-bold text-white tabular-nums">--:--:--</div>
+          <div id="liveDate" class="text-xs text-bakery-200">Loading…</div>
+        </div>
+        <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+          <span id="syncDot" class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></span>
+          <span id="syncStatus" class="text-sm text-white font-medium">Live Sync</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bg-bakery-950/40 backdrop-blur-sm border-t border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between text-xs text-bakery-200">
+      <span>ආයුබෝවන් • Welcome</span>
+      <span id="shiftIndicator" class="flex items-center gap-2">
+        <span>Active Shift: </span>
+        <span id="currentShiftLabel" class="font-semibold text-white">—</span>
+      </span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <!-- Stats Grid -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 slide-up">
+    <div class="stat-card glass rounded-2xl p-5 border-l-4 border-bakery-500">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-bakery-700 uppercase tracking-wider">Total Batches</span>
+        <span class="text-2xl">📦</span>
+      </div>
+      <div id="statBatches" class="text-3xl font-bold text-bakery-900 tabular-nums">0</div>
+      <div class="text-xs text-bakery-600 mt-1">All time logged</div>
+    </div>
+    <div class="stat-card glass rounded-2xl p-5 border-l-4 border-green-500">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-bakery-700 uppercase tracking-wider">Good Units</span>
+        <span class="text-2xl">✅</span>
+      </div>
+      <div id="statGood" class="text-3xl font-bold text-green-700 tabular-nums">0</div>
+      <div class="text-xs text-bakery-600 mt-1">Passed QC</div>
+    </div>
+    <div class="stat-card glass rounded-2xl p-5 border-l-4 border-red-500">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-bakery-700 uppercase tracking-wider">Scrap Units</span>
+        <span class="text-2xl">⚠️</span>
+      </div>
+      <div id="statScrap" class="text-3xl font-bold text-red-700 tabular-nums">0</div>
+      <div class="text-xs text-bakery-600 mt-1">Rejected items</div>
+    </div>
+    <div class="stat-card glass rounded-2xl p-5 border-l-4 border-saffron-500">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-bakery-700 uppercase tracking-wider">Avg Yield</span>
+        <span class="text-2xl">📊</span>
+      </div>
+      <div id="statYield" class="text-3xl font-bold text-saffron-600 tabular-nums">0%</div>
+      <div class="text-xs text-bakery-600 mt-1">Production efficiency</div>
+    </div>
+  </section>
+
+  <!-- Main Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Production Logger -->
+    <section class="lg:col-span-2 glass rounded-3xl shadow-xl overflow-hidden slide-up">
+      <div class="gradient-header p-5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+            <span class="text-xl">📝</span>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Production Logger</h2>
+            <p class="text-xs text-bakery-200">Record output, quality, and scrap reasons</p>
+          </div>
+        </div>
+        <span class="bg-green-400/20 text-green-100 text-xs font-semibold px-3 py-1 rounded-full border border-green-300/30 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 bg-green-400 rounded-full pulse-dot"></span>
+          Live Sync
+        </span>
+      </div>
+
+      <form id="productionForm" class="p-6 space-y-6">
+        <!-- Shift Selection -->
+        <div>
+          <label class="block text-sm font-bold text-bakery-800 mb-3">
+            Shift <span class="text-red-500">*</span>
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-shift="Morning" class="shift-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-bakery-200 bg-white hover:border-bakery-400">
+              <span class="text-2xl">🌅</span>
+              <span class="text-xs font-semibold text-bakery-700">Morning</span>
+              <span class="text-[10px] text-bakery-500">5AM – 1PM</span>
+            </button>
+            <button type="button" data-shift="Afternoon" class="shift-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-bakery-200 bg-white hover:border-bakery-400">
+              <span class="text-2xl">☀️</span>
+              <span class="text-xs font-semibold text-bakery-700">Afternoon</span>
+              <span class="text-[10px] text-bakery-500">1PM – 9PM</span>
+            </button>
+            <button type="button" data-shift="Night" class="shift-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-bakery-200 bg-white hover:border-bakery-400">
+              <span class="text-2xl">🌙</span>
+              <span class="text-xs font-semibold text-bakery-700">Night</span>
+              <span class="text-[10px] text-bakery-500">9PM – 5AM</span>
+            </button>
+          </div>
+          <input type="hidden" id="shiftInput" required>
+        </div>
+
+        <!-- Product Selection -->
+        <div>
+          <label class="block text-sm font-bold text-bakery-800 mb-3">
+            Select Product <span class="text-red-500">*</span>
+          </label>
+          <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <!-- Products populated by JS -->
+          </div>
+          <input type="hidden" id="productInput" required>
+        </div>
+
+        <!-- Quantities -->
+        <div>
+          <label class="block text-sm font-bold text-bakery-800 mb-3">
+            Batch Quantities <span class="text-red-500">*</span>
+          </label>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-blue-50 rounded-xl p-3 border border-blue-200">
+              <label class="text-xs font-semibold text-blue-700 flex items-center gap-1">
+                <span>📋</span> Planned
+              </label>
+              <input type="number" id="plannedQty" min="0" value="0" class="w-full mt-1 text-2xl font-bold text-blue-900 bg-transparent border-none focus:ring-0 p-0 tabular-nums">
+            </div>
+            <div class="bg-green-50 rounded-xl p-3 border border-green-200">
+              <label class="text-xs font-semibold text-green-700 flex items-center gap-1">
+                <span>✓</span> Passed QC
+              </label>
+              <input type="number" id="goodQty" min="0" value="0" class="w-full mt-1 text-2xl font-bold text-green-900 bg-transparent border-none focus:ring-0 p-0 tabular-nums">
+            </div>
+            <div class="bg-red-50 rounded-xl p-3 border border-red-200">
+              <label class="text-xs font-semibold text-red-700 flex items-center gap-1">
+                <span>⚠️</span> Rejected
+              </label>
+              <input type="number" id="scrapQty" min="0" value="0" class="w-full mt-1 text-2xl font-bold text-red-900 bg-transparent border-none focus:ring-0 p-0 tabular-nums">
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrap Reason -->
+        <div>
+          <label class="block text-sm font-bold text-bakery-800 mb-3">Scrap Reason</label>
+          <select id="scrapReason" class="w-full px-4 py-3 rounded-xl border-2 border-bakery-200 bg-white text-bakery-800 font-medium focus:border-bakery-500 transition">
+            <option value="None">✓ None (Passed QC)</option>
+            <option value="Overbaked / Burnt Crust">🔥 Overbaked / Burnt Crust</option>
+            <option value="Filling Leakage">💧 Filling Leakage</option>
+            <option value="Shaping Defect">🔨 Shaping Defect</option>
+            <option value="Uneven Lamination">📐 Uneven Lamination</option>
+            <option value="Proofing Defect">🫧 Proofing Defect</option>
+            <option value="Sealing Defect">🔒 Sealing Defect</option>
+            <option value="Handling Damage">🤲 Handling Damage</option>
+          </select>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="submitBtn" class="btn-primary w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg flex items-center justify-center gap-2">
+          <span>💾</span>
+          <span>Save Production Log</span>
+        </button>
+      </form>
+
+      <!-- Recent Logs -->
+      <div class="border-t-2 border-bakery-100 bg-bakery-50/50 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-bakery-800 flex items-center gap-2">
+            <span>🕐</span> Recent Logs
+          </h3>
+          <span id="logCount" class="text-xs font-semibold text-bakery-600 bg-bakery-100 px-3 py-1 rounded-full">0 entries</span>
+        </div>
+        <div id="recentLogs" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+          <div class="text-center py-8 text-bakery-500">
+            <div class="text-4xl mb-2">📭</div>
+            <p class="text-sm">No logs recorded yet.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column -->
+    <div class="space-y-6">
+
+      <!-- Yield Preview -->
+      <section class="glass rounded-3xl shadow-xl p-6 slide-up">
+        <h3 class="font-bold text-bakery-800 mb-4 flex items-center gap-2">
+          <span>🎯</span> Live Yield Preview
+        </h3>
+        <div class="flex items-center justify-center py-4">
+          <div class="relative">
+            <svg class="w-40 h-40 transform -rotate-90">
+              <circle cx="80" cy="80" r="68" stroke="#f2d5a8" stroke-width="12" fill="none"/>
+              <circle id="yieldCircle" cx="80" cy="80" r="68" stroke="url(#yieldGradient)" stroke-width="12" fill="none"
+                      stroke-dasharray="427.26" stroke-dashoffset="427.26" stroke-linecap="round" class="yield-ring"/>
+              <defs>
+                <linearGradient id="yieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#b85d14"/>
+                  <stop offset="100%" stop-color="#f4a226"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div id="yieldPercent" class="text-4xl font-bold text-bakery-800 tabular-nums">—%</div>
+              <div class="text-xs text-bakery-500 font-medium">Yield Rate</div>
+            </div>
+          </div>
+        </div>
+        <p id="yieldHint" class="text-center text-xs text-bakery-500 mt-2">Enter quantities to see live yield calculation</p>
+      </section>
+
+      <!-- Estimated Materials -->
+      <section class="glass rounded-3xl shadow-xl p-6 slide-up">
+        <h3 class="font-bold text-bakery-800 mb-4 flex items-center gap-2">
+          <span>🧮</span> Estimated Materials
+        </h3>
+        <div id="materialsPanel" class="text-center py-6 text-bakery-500">
+          <div class="text-4xl mb-2">📦</div>
+          <p class="text-sm">Awaiting input</p>
+          <p class="text-xs mt-1">Select a product and enter target quantity</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Raw Materials Inventory -->
+  <section class="glass rounded-3xl shadow-xl overflow-hidden slide-up">
+    <div class="bg-gradient-to-r from-bakery-700 to-bakery-600 p-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+          <span class="text-xl">🌾</span>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">Raw Materials Inventory</h2>
+          <p class="text-xs text-bakery-200">Real-time stock levels with reorder alerts</p>
+        </div>
+      </div>
+      <span class="bg-green-400/20 text-green-100 text-xs font-semibold px-3 py-1 rounded-full border border-green-300/30 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 bg-green-400 rounded-full pulse-dot"></span>
+        Live Data
+      </span>
+    </div>
+    <div id="inventoryGrid" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="col-span-full text-center py-8">
+        <div class="loader mx-auto mb-3"></div>
+        <p class="text-sm text-bakery-600">Loading inventory data…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Production History -->
+  <section class="glass rounded-3xl shadow-xl overflow-hidden slide-up">
+    <div class="bg-gradient-to-r from-bakery-700 to-bakery-600 p-5 flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+          <span class="text-xl">📜</span>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">Production History</h2>
+          <p class="text-xs text-bakery-200">Complete log of all production batches</p>
+        </div>
+      </div>
+      <button id="refreshHistory" class="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-4 py-2 rounded-lg border border-white/20 flex items-center gap-2 transition">
+        <span>🔄</span> Refresh
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-bakery-100/70">
+          <tr>
+            <th class="text-left px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Timestamp</th>
+            <th class="text-left px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Shift</th>
+            <th class="text-left px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Product</th>
+            <th class="text-right px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Target</th>
+            <th class="text-right px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Good</th>
+            <th class="text-right px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Scrap</th>
+            <th class="text-right px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Yield</th>
+            <th class="text-left px-4 py-3 text-xs font-bold text-bakery-700 uppercase tracking-wider">Reason</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody" class="divide-y divide-bakery-100">
+          <tr>
+            <td colspan="8" class="text-center py-8">
+              <div class="loader mx-auto mb-3"></div>
+              <p class="text-sm text-bakery-600">Loading production history…</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center py-8 text-bakery-600">
+    <p class="text-sm">© 2026 Sri Lankan Bakery Management System</p>
+    <p class="text-xs sinhala mt-1">ස්තූතියි • Thank You</p>
+  </footer>
+</main>
+
+<script>
+// ==================== Configuration ====================
+const API_URL = 'https://script.google.com/macros/s/AKfycbykncIISCsVcHP-pK_slM8dnVY8FUKi6sCuYJhFFHg/dev';
+
+// Product catalog with recipes (materials per unit)
+const PRODUCTS = [
+  { id: 'kokis', name: 'Kokis', emoji: '🍪', riceFlour: 0.15, coconutMilk: 0.08, eggs: 0.3, sugar: 0.02, salt: 0.005 },
+  { id: 'lavaadu', name: 'Lavaadu', emoji: '🥞', flour: 0.08, sugar: 0.05, eggs: 0.2, milk: 0.05, butter: 0.03 },
+  { id: 'kavum', name: 'Kavum', emoji: '🍩', riceFlour: 0.12, kithul: 0.1, coconutOil: 0.15, eggs: 0.1, salt: 0.005 },
+  { id: 'aluvacha', name: 'Aluvacha', emoji: '🍬', malt: 0.08, sugar: 0.1, coconut: 0.05, cashew: 0.03 },
+  { id: 'buns', name: 'Buns', emoji: '🍞', flour: 0.1, sugar: 0.04, yeast: 0.005, butter: 0.03, eggs: 0.1 },
+  { id: 'rolls', name: 'Fish Rolls', emoji: '🥟', flour: 0.08, fish: 0.06, potato: 0.05, onion: 0.03, chili: 0.01 },
+  { id: 'pastries', name: 'Pastries', emoji: '🥐', flour: 0.12, butter: 0.08, jam: 0.04, eggs: 0.1, sugar: 0.03 },
+  { id: 'cookies', name: 'Cookies', emoji: '🍪', flour: 0.06, butter: 0.05, sugar: 0.04, chocolate: 0.03, eggs: 0.05 },
+  { id: 'cake', name: 'Cake Slice', emoji: '🍰', flour: 0.15, sugar: 0.12, eggs: 0.3, butter: 0.1, milk: 0.08 },
+];
+
+// ==================== State ====================
+let state = {
+  selectedShift: null,
+  selectedProduct: null,
+  productionHistory: [],
+  inventory: [],
+  isSubmitting: false
+};
+
+// ==================== Clock ====================
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('liveClock').textContent = `${h}:${m}:${s}`;
+  document.getElementById('liveDate').textContent = now.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  
+  const hour = now.getHours();
+  let shift = 'Night 🌙', label = 'Night (9PM–5AM)';
+  if (hour >= 5 && hour < 13) { shift = 'Morning 🌅'; label = 'Morning (5AM–1PM)'; }
+  else if (hour >= 13 && hour < 21) { shift = 'Afternoon ☀️'; label = 'Afternoon (1PM–9PM)'; }
+  document.getElementById('currentShiftLabel').textContent = label;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ==================== Toast ====================
+function showToast(message, type = 'success') {
+  const colors = {
+    success: 'bg-green-500',
+    error: 'bg-red-500',
+    info: 'bg-blue-500'
+  };
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${colors[type]} text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[280px]`;
+  toast.innerHTML = `<span class="text-xl">${icons[type]}</span><span class="font-medium text-sm">${message}</span>`;
+  document.getElementById('toastContainer').appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ==================== Render Products ====================
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = PRODUCTS.map(p => `
+    <div class="product-card border-2 border-bakery-200 rounded-xl p-3 bg-white" data-product="${p.id}">
+      <div class="text-2xl mb-1">${p.emoji}</div>
+      <div class="text-xs font-bold text-bakery-800">${p.name}</div>
+    </div>
+  `).join('');
+  
+  grid.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', () => {
+      grid.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.selectedProduct = card.dataset.product;
+      document.getElementById('productInput').value = state.selectedProduct;
+      updateMaterials();
+    });
+  });
+}
+
+// ==================== Shift Selection ====================
+document.querySelectorAll('.shift-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.selectedShift = btn.dataset.shift;
+    document.getElementById('shiftInput').value = state.selectedShift;
+  });
+});
+
+// ==================== Materials & Yield ====================
+function updateMaterials() {
+  const panel = document.getElementById('materialsPanel');
+  const planned = parseInt(document.getElementById('plannedQty').value) || 0;
+  
+  if (!state.selectedProduct || planned <= 0) {
+    panel.innerHTML = `
+      <div class="text-center py-6 text-bakery-500">
+        <div class="text-4xl mb-2">📦</div>
+        <p class="text-sm">Awaiting input</p>
+        <p class="text-xs mt-1">Select a product and enter target quantity</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const product = PRODUCTS.find(p => p.id === state.selectedProduct);
+  const materials = [
+    { name: 'Flour / Rice Flour', amount: (product.flour || product.riceFlour || 0) * planned, unit: 'kg', icon: '🌾' },
+    { name: 'Sugar / Kithul', amount: (product.sugar || product.kithul || 0) * planned, unit: 'kg', icon: '🍯' },
+    { name: 'Eggs', amount: (product.eggs || 0) * planned, unit: 'pcs', icon: '🥚' },
+    { name: 'Butter / Coconut Oil', amount: (product.butter || product.coconutOil || 0) * planned, unit: 'kg', icon: '🧈' },
+    { name: 'Milk / Coconut Milk', amount: (product.milk || product.coconutMilk || 0) * planned, unit: 'L', icon: '🥛' },
+  ].filter(m => m.amount > 0);
+  
+  panel.innerHTML = `
+    <div class="text-xs font-semibold text-bakery-600 mb-3">For ${planned} × ${product.name}</div>
+    <div class="space-y-2">
+      ${materials.map(m => `
+        <div class="flex items-center justify-between bg-bakery-50 rounded-lg px-3 py-2">
+          <span class="flex items-center gap-2 text-sm text-bakery-700">
+            <span>${m.icon}</span> ${m.name}
+          </span>
+          <span class="font-bold text-bakery-900 tabular-nums">${m.amount.toFixed(2)} ${m.unit}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function updateYield() {
+  const planned = parseInt(document.getElementById('plannedQty').value) || 0;
+  const good = parseInt(document.getElementById('goodQty').value) || 0;
+  const circle = document.getElementById('yieldCircle');
+  const percent = document.getElementById('yieldPercent');
+  const hint = document.getElementById('yieldHint');
+  const circumference = 427.26;
+  
+  if (planned <= 0) {
+    circle.style.strokeDashoffset = circumference;
+    percent.textContent = '—%';
+    hint.textContent = 'Enter quantities to see live yield calculation';
+    return;
+  }
+  
+  const yieldRate = Math.min(100, (good / planned) * 100);
+  const offset = circumference - (yieldRate / 100) * circumference;
+  circle.style.strokeDashoffset = offset;
+  percent.textContent = yieldRate.toFixed(1) + '%';
+  hint.textContent = yieldRate >= 90 ? '🌟 Excellent yield!' : yieldRate >= 75 ? '✓ Good production' : '⚠️ Review process';
+}
+
+['plannedQty', 'goodQty', 'scrapQty'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    updateMaterials();
+    updateYield();
+  });
+});
+
+document.getElementById('scrapQty').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value) || 0;
+  const select = document.getElementById('scrapReason');
+  if (val > 0 && select.value === 'None') {
+    select.value = 'Overbaked / Burnt Crust';
+  } else if (val === 0) {
+    select.value = 'None';
+  }
+});
+
+// ==================== API Calls ====================
+async function fetchFromSheet(action) {
+  try {
+    const url = `${API_URL}?action=${action}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Network error');
+    return await res.json();
+  } catch (err) {
+    console.error('Fetch error:', err);
+    return null;
+  }
+}
+
+async function postToSheet(data) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data)
+    });
+    return true;
+  } catch (err) {
+    console.error('Post error:', err);
+    return false;
+  }
+}
+
+// ==================== Load Data ====================
+async function loadInventory() {
+  const grid = document.getElementById('inventoryGrid');
+  const data = await fetchFromSheet('getInventory');
+  
+  let inventory = data && data.data ? data.data : [
+    { name: 'Wheat Flour', stock: 120, unit: 'kg', reorder: 50, icon: '🌾' },
+    { name: 'Rice Flour', stock: 85, unit: 'kg', reorder: 40, icon: '🍚' },
+    { name: 'Sugar', stock: 95, unit: 'kg', reorder: 30, icon: '🍯' },
+    { name: 'Eggs', stock: 480, unit: 'pcs', reorder: 200, icon: '🥚' },
+    { name: 'Butter', stock: 25, unit: 'kg', reorder: 15, icon: '🧈' },
+    { name: 'Coconut Milk', stock: 60, unit: 'L', reorder: 25, icon: '🥥' },
+    { name: 'Kithul Treacle', stock: 18, unit: 'L', reorder: 10, icon: '🍁' },
+    { name: 'Cashew Nuts', stock: 12, unit: 'kg', reorder: 8, icon: '🥜' },
+  ];
+  
+  state.inventory = inventory;
+  
+  grid.innerHTML = inventory.map(item => {
+    const pct = Math.min(100, (item.stock / (item.reorder * 3)) * 100);
+    const low = item.stock <= item.reorder;
+    const critical = item.stock <= item.reorder * 0.5;
+    const color = critical ? 'red' : low ? 'amber' : 'green';
+    const barColor = critical ? 'bg-red-500' : low ? 'bg-amber-500' : 'bg-green-500';
+    const badge = critical ? 'CRITICAL' : low ? 'LOW' : 'OK';
+    const badgeColor = critical ? 'bg-red-100 text-red-700' : low ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+    
+    return `
+      <div class="bg-white rounded-xl p-4 border border-bakery-100 hover:shadow-lg transition">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${item.icon}</span>
+            <div>
+              <div class="font-bold text-bakery-800 text-sm">${item.name}</div>
+              <div class="text-xs text-bakery-500">Reorder: ${item.reorder} ${item.unit}</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">${badge}</span>
+        </div>
+        <div class="flex items-end justify-between mb-2">
+          <div class="text-2xl font-bold text-bakery-900 tabular-nums">${item.stock.toLocaleString()}</div>
+          <div class="text-xs text-bakery-500">${item.unit}</div>
+        </div>
+        <div class="h-1.5 bg-bakery-100 rounded-full overflow-hidden">
+          <div class="${barColor} h-full rounded-full transition-all" style="width: ${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadHistory() {
+  const body = document.getElementById('historyBody');
+  const data = await fetchFromSheet('getProduction');
+  
+  let history = data && data.data ? data.data : [];
+  state.productionHistory = history;
+  
+  updateStats();
+  renderRecentLogs();
+  
+  if (history.length === 0) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center py-12">
+          <div class="text-5xl mb-3">📭</div>
+          <p class="text-bakery-600 font-medium">No production records yet</p>
+          <p class="text-xs text-bakery-500 mt-1">Start logging batches to see history here</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  body.innerHTML = history.slice().reverse().slice(0, 50).map(row => {
+    const yieldRate = row.target > 0 ? ((row.good / row.target) * 100).toFixed(1) : 0;
+    const yieldColor = yieldRate >= 90 ? 'text-green-700 bg-green-50' : yieldRate >= 75 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50';
+    const shiftEmoji = row.shift === 'Morning' ? '🌅' : row.shift === 'Afternoon' ? '☀️' : '🌙';
+    const product = PRODUCTS.find(p => p.name === row.product);
+    const emoji = product ? product.emoji : '🍞';
+    
+    return `
+      <tr class="table-row transition">
+        <td class="px-4 py-3 text-sm text-bakery-700 tabular-nums">${row.timestamp || '—'}</td>
+        <td class="px-4 py-3 text-sm"><span class="font-medium">${shiftEmoji} ${row.shift || '—'}</span></td>
+        <td class="px-4 py-3 text-sm font-semibold text-bakery-800">${emoji} ${row.product || '—'}</td>
+        <td class="px-4 py-3 text-sm text-right tabular-nums font-semibold">${row.target || 0}</td>
+        <td class="px-4 py-3 text-sm text-right tabular-nums text-green-700 font-semibold">${row.good || 0}</td>
+        <td class="px-4 py-3 text-sm text-right tabular-nums text-red-700 font-semibold">${row.scrap || 0}</td>
+        <td class="px-4 py-3 text-right">
+          <span class="inline-block px-2 py-1 rounded-md text-xs font-bold ${yieldColor} tabular-nums">${yieldRate}%</span>
+        </td>
+        <td class="px-4 py-3 text-xs text-bakery-600">${row.reason || '—'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updateStats() {
+  const history = state.productionHistory;
+  const total = history.length;
+  const good = history.reduce((s, r) => s + (parseInt(r.good) || 0), 0);
+  const scrap = history.reduce((s, r) => s + (parseInt(r.scrap) || 0), 0);
+  const totalTarget = history.reduce((s, r) => s + (parseInt(r.target) || 0), 0);
+  const avgYield = totalTarget > 0 ? (good / totalTarget * 100) : 0;
+  
+  document.getElementById('statBatches').textContent = total;
+  document.getElementById('statGood').textContent = good.toLocaleString();
+  document.getElementById('statScrap').textContent = scrap.toLocaleString();
+  document.getElementById('statYield').textContent = avgYield.toFixed(1) + '%';
+}
+
+function renderRecentLogs() {
+  const container = document.getElementById('recentLogs');
+  const count = document.getElementById('logCount');
+  const history = state.productionHistory;
+  
+  count.textContent = `${history.length} ${history.length === 1 ? 'entry' : 'entries'}`;
+  
+  if (history.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-8 text-bakery-500">
+        <div class="text-4xl mb-2">📭</div>
+        <p class="text-sm">No logs recorded yet.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = history.slice().reverse().slice(0, 5).map(row => {
+    const product = PRODUCTS.find(p => p.name === row.product);
+    const emoji = product ? product.emoji : '🍞';
+    const yieldRate = row.target > 0 ? ((row.good / row.target) * 100).toFixed(0) : 0;
+    
+    return `
+      <div class="flex items-center justify-between bg-white rounded-xl p-3 border border-bakery-100 hover:border-bakery-300 transition">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-bakery-100 rounded-lg flex items-center justify-center text-xl">${emoji}</div>
+          <div>
+            <div class="font-semibold text-sm text-bakery-800">${row.product}</div>
+            <div class="text-xs text-bakery-500">${row.timestamp}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-bold text-bakery-800 tabular-nums">${row.good}/${row.target}</div>
+          <div class="text-xs font-semibold ${yieldRate >= 90 ? 'text-green-600' : 'text-amber-600'}">${yieldRate}%</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== Form Submission ====================
+document.getElementById('productionForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (state.isSubmitting) return;
+  
+  if (!state.selectedShift) { showToast('Please select a shift', 'error'); return; }
+  if (!state.selectedProduct) { showToast('Please select a product', 'error'); return; }
+  
+  const planned = parseInt(document.getElementById('plannedQty').value) || 0;
+  const good = parseInt(document.getElementById('goodQty').value) || 0;
+  const scrap = parseInt(document.getElementById('scrapQty').value) || 0;
+  
+  if (planned <= 0) { showToast('Planned quantity must be greater than 0', 'error'); return; }
+  
+  const product = PRODUCTS.find(p => p.id === state.selectedProduct);
+  const reason = document.getElementById('scrapReason').value;
+  const now = new Date();
+  const timestamp = now.toLocaleString('en-GB', { 
+    day: '2-digit', month: '2-digit', year: 'numeric', 
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false 
+  });
+  
+  const payload = {
+    action: 'addProduction',
+    timestamp: timestamp,
+    shift: state.selectedShift,
+    product: product.name,
+    target: planned,
+    good: good,
+    scrap: scrap,
+    reason: reason
+  };
+  
+  state.isSubmitting = true;
+  const btn = document.getElementById('submitBtn');
+  const originalContent = btn.innerHTML;
+  btn.innerHTML = '<div class="loader border-white/30 border-t-white"></div><span>Saving…</span>';
+  btn.disabled = true;
+  
+  document.getElementById('syncStatus').textContent = 'Syncing…';
+  document.getElementById('syncDot').classList.remove('bg-green-400');
+  document.getElementById('syncDot').classList.add('bg-amber-400');
+  
+  const success = await postToSheet(payload);
+  
+  // Add to local state immediately for UI feedback
+  const newEntry = {
+    timestamp: timestamp,
+    shift: state.selectedShift,
+    product: product.name,
+    target: planned,
+    good: good,
+    scrap: scrap,
+    reason: reason
+  };
+  state.productionHistory.push(newEntry);
+  updateStats();
+  renderRecentLogs();
+  
+  // Reload from sheet to confirm
+  setTimeout(() => loadHistory(), 1500);
+  
+  state.isSubmitting = false;
+  btn.innerHTML = originalContent;
+  btn.disabled = false;
+  
+  document.getElementById('syncStatus').textContent = 'Live Sync';
+  document.getElementById('syncDot').classList.remove('bg-amber-400');
+  document.getElementById('syncDot').classList.add('bg-green-400');
+  
+  showToast('Production log saved successfully!', 'success');
+  
+  // Reset form
+  document.getElementById('plannedQty').value = 0;
+  document.getElementById('goodQty').value = 0;
+  document.getElementById('scrapQty').value = 0;
+  document.getElementById('scrapReason').value = 'None';
+  updateMaterials();
+  updateYield();
+});
+
+// ==================== Refresh Button ====================
+document.getElementById('refreshHistory').addEventListener('click', () => {
+  showToast('Refreshing data…', 'info');
+  loadHistory();
+  loadInventory();
+});
+
+// ==================== Init ====================
+renderProducts();
+loadInventory();
+loadHistory();
+
+// Auto-refresh every 60 seconds
+setInterval(() => {
+  loadHistory();
+  loadInventory();
+}, 60000);
+</script>
+</body>
+</html>
