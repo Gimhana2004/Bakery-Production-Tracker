@@ -1,0 +1,20 @@
+[TAB: Raw Materials]
+Material Name,Current Stock (Kg),Min Stock Level (Kg)
+Wheat Flour,250.0,100.0
+White Sugar,80.0,40.0
+Instant Yeast,12.0,5.0
+
+[TAB: Products]
+Product Name,Unit Price
+Roast Paan,140.00
+Malu Paan,120.00
+Kimbula Banis,90.00
+
+[TAB: Recipes]
+Product Name,Material Name,Quantity Required (Kg)
+Roast Paan,Wheat Flour,0.350
+Roast Paan,Instant Yeast,0.006
+Roast Paan,Bakery Margarine,0.015
+
+[TAB: Production Logs]
+Date,Shift,Product Name,Target Qty,Good Qty,Scrap Qty,Scrap Reason,Yield %
